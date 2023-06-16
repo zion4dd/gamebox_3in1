@@ -1,6 +1,6 @@
 import customtkinter
 from gamefield import GameField
-from random import randint, choice
+from random import choice
 import itertools
 from time import sleep
 
@@ -90,26 +90,26 @@ class App(customtkinter.CTk):
             return 'black'
         
     def flash(self, i, j):
-        # self.field_left[i][j].configure(text='+')
+        sleep(2)
         self.field_left[i][j].configure(border_width=4, text='+')
         self.update()
-        sleep(0.8)
-        # self.field_left[i][j].configure(text='')
+        sleep(1)
         self.field_left[i][j].configure(border_width=0, text='')
-
 
     def redraw(self):
         for i in range(self._size):
             for j in range(self._size):
                 self.field_left[i][j].configure(fg_color=self.cell_view_human(i, j))
                 self.field_right[i][j].configure(fg_color=self.cell_view_droid(i, j))
+        self.update()
 
     def hit(self, i, j):
         if self._fdroid.get_field()[i][j] == 1:
-            self._fdroid.hit(j, i)
+            self._fdroid.hit(i, j)
+        self.redraw()
         self.droid()
-        self._fhuman.move_ships()
         self._fdroid.move_ships()
+        self._fhuman.move_ships()
         self.redraw()
 
     def droid(self):
@@ -121,8 +121,7 @@ class App(customtkinter.CTk):
         print(x, y) #test
         self.flash(x, y)
         if self._fhuman.get_field()[x][y] == 1:
-            self._fhuman.hit(y, x)
-
+            self._fhuman.hit(x, y)
             self.droid_helper()
 
     def droid_helper(self):
@@ -158,7 +157,6 @@ class App(customtkinter.CTk):
         # self._fhuman.move_ships()
         # self._fdroid.move_ships()
         # self._fhuman.show()
-        # print()
         # self._fdroid.show()
         # self.redraw()
 
@@ -177,6 +175,5 @@ if __name__ == "__main__":
     # def droid(self):
     #     x = randint(0, self._size - 1)
     #     y = randint(0, self._size - 1)
-    #     print(x, y)
     #     if self._fhuman.get_field()[x][y] == 1:
-    #         self._fhuman.hit(y, x)
+    #         self._fhuman.hit(x, y)

@@ -1,4 +1,5 @@
 from random import randint, choice
+# x - row, y - column
 
 class Ship:
     def __init__(self, length, tp=1, x=None, y=None):
@@ -126,7 +127,7 @@ class GameField:
         field = [[0] * self._size for _ in range(self._size)]
         for ship in self._ships:
             for x, y, value in ship:
-                field[y][x] = value
+                field[x][y] = value
         return tuple(tuple(row) for row in field)  # why not list?
 
     def hit(self, x, y):
@@ -134,7 +135,7 @@ class GameField:
             x1, y1 = ship.get_start_coords()
             x2, y2 = ship.x2, ship.y2
             if x1 <= x < x2 and y1 <= y < y2:
-                print(f'hit! x: {x1} <= {x} < {x2} | y: {y1} <= {y} < {y2}') #test
+                print(f'hit! row: {x1} <= {x} < {x2} | col: {y1} <= {y} < {y2}') #test
                 ship[max(x - x1, y - y1)] = 2
                 ship._is_move = False
                 if all(map(lambda x: x == 2, ship._cells)):
