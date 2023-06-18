@@ -23,7 +23,7 @@ class App(customtkinter.CTk):
         self._size = size
         self.fire_cells = [(x, y) for x in range(self._size) for y in range(self._size)]
         self.fire_next = set()
-        self.fire_memory = [] #mem
+        self.fire_memory = []
 
         # ============ create frames (2x1 +1) ============
         self.frame_left = customtkinter.CTkFrame(master=self,
@@ -124,37 +124,64 @@ class App(customtkinter.CTk):
         print(x, y) #test
         self.flash(x, y)
         if self._fhuman.get_field()[x][y] == 1:
-            self._fhuman.hit(x, y)
-            self.fire_memory.append((x, y)) #mem
-            self.droid_iq()
+            self._fhuman.hit(x, y) # hit changes self._fhuman.get_field()[x][y]
+            self.fire_memory.append((x, y))
+            if self._fhuman.get_field()[x][y] == 2:
+                # self.droid_iq_100(x, y)
+                self.droid_iq_70()
+            else: # if self._fhuman.get_field()[x][y] == 3 (ship dead)
+                for x, y in self.fire_memory:
+                    for a, b in itertools.product([-1,0,1], repeat=2):
+                        try:
+                            self.fire_cells.remove((x + a, y + b))
+                        except:
+                            continue
+                self.fire_next = set()
+                self.fire_memory = []
 
-    def droid_iq(self):
+    def droid_iq_100(self, x, y):
         def add_next(x, y):
-            if min(x, y) >= 0 and max(x, y) < self._size:
+            if min(x, y) >= 0 and max(x, y) < self._size and (x, y) in self.fire_cells:
+                self.fire_next.add((x, y))
+
+        if len(self.fire_memory) < 2:
+            for d in (-1, 1):
+                _x = x + d
+                _y = y + d
+                add_next(_x, y)
+                add_next(x, _y)
+        else:
+            mem = self.fire_memory
+            maax = max(i[0] for i in mem), max(i[1] for i in mem)
+            miin = min(i[0] for i in mem), min(i[1] for i in mem)
+            if maax[0] - miin[0] == 0:
+                maax = maax[0], maax[1] + 1
+                miin = miin[0], miin[1] - 1
+            else:
+                maax = maax[0] + 1, maax[1]
+                miin = miin[0] - 1, miin[1]
+            self.fire_next = set()
+            add_next(*maax)
+            add_next(*miin)
+        print(self.fire_next) #test
+
+    def droid_iq_70(self):
+        def add_next(x, y):
+            if min(x, y) >= 0 and max(x, y) < self._size and (x, y) in self.fire_cells:
                 self.fire_next.add((x, y))
 
         fhuman = self._fhuman.get_field()
         for i in range(self._size):
             for j in range(self._size):
-                
-                if fhuman[i][j] == 2: #ads nsew cells
+                if fhuman[i][j] == 2:
                     for d in (-1, 1):
                         x, y = i + d, j
                         add_next(x, y)
                         x, y = i, j + d
                         add_next(x, y)
                     print(self.fire_next) #test
-                    # self.fire_next.remove((i, j))
-                    # self.fire_cells.remove((i, j))
                 
-                if fhuman[i][j] == 3:
-                    for a, b in itertools.product([-1,0,1], repeat=2):
-                        try:
-                            self.fire_cells.remove((i+a, j+b))
-                            self.fire_next.remove((i+a, j+b))
-                        except:
-                            continue
-
+               
     def test(self):
         print(self.fire_next)
         print(self.fire_cells)
