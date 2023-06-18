@@ -4,22 +4,26 @@ from random import choice
 import itertools
 from time import sleep
 
-DEBUG = True #FIXME
+DEBUG = False #FIXME
 SIZE = 10
 
 class App(customtkinter.CTk):
     def __init__(self, field_human, field_droid, size=10):
         super().__init__()
 
-        self.title("CustomTkinter complex_example.py")
+        self.title("SEABATTLE THE GAME")
         self.resizable(False, False)
         self.geometry("+70+70")
 
-        self._size = size
         self._fhuman = field_human
         self._fdroid = field_droid
+        self._fhuman_get = field_human.get_field()
+        self._fdroid_get = field_droid.get_field()
+        
+        self._size = size
         self.fire_cells = [(x, y) for x in range(self._size) for y in range(self._size)]
         self.fire_next = set()
+        self.fire_memory = [] #mem
 
         # ============ create frames (2x1 +1) ============
         self.frame_left = customtkinter.CTkFrame(master=self,
@@ -48,55 +52,54 @@ class App(customtkinter.CTk):
         self.field_left = [[0] * self._size for _ in range(self._size)]
         for i in range(self._size):
             for j in range(self._size):
-                self.field_left[i][j] = customtkinter.CTkButton(
-                                    master=self.frame_left,
-                                    text='',
-                                    width=28,
-                                    border_color='white',
-                                    fg_color=self.cell_view_human(i, j),
-                                    command=lambda row=i, column=j: self.hit(row, column))
+                self.field_left[i][j] = customtkinter.CTkButton(master=self.frame_left,
+                                                                text='',
+                                                                width=28,
+                                                                border_color='white',
+                                                                fg_color=self.cell_view_human(i, j))
                 self.field_left[i][j].grid(row=i, column=j)
 
         # ============ frame_right ============
         self.field_right = [[0] * self._size for _ in range(self._size)]
         for i in range(self._size):
             for j in range(self._size):
-                self.field_right[i][j] = customtkinter.CTkButton(
-                                    master=self.frame_right,
-                                    text='',
-                                    width=28,
-                                    fg_color=self.cell_view_droid(i, j),
-                                    command=lambda row=i, column=j: self.hit(row, column))
+                self.field_right[i][j] = customtkinter.CTkButton(master=self.frame_right,
+                                                                 text='',
+                                                                 width=28,
+                                                                #  fg_color=self.cell_view_droid(i, j),
+                                                                 command=lambda row=i, column=j: self.hit(row, column))
                 self.field_right[i][j].grid(row=i, column=j)
 
     def cell_view_human(self, i, j):
-        if self._fhuman.get_field()[i][j] == 0:
+        if self._fhuman_get[i][j] == 0:
             return ["#3B8ED0", "#1F6AA5"]
-        if self._fhuman.get_field()[i][j] == 1:
+        if self._fhuman_get[i][j] == 1:
             return 'grey'
-        if self._fhuman.get_field()[i][j] == 2:
+        if self._fhuman_get[i][j] == 2:
             return 'red'
-        if self._fhuman.get_field()[i][j] == 3:
+        if self._fhuman_get[i][j] == 3:
             return 'black'
         
     def cell_view_droid(self, i, j):
-        if self._fdroid.get_field()[i][j] == 0:
+        if self._fdroid_get[i][j] == 0:
             return ["#3B8ED0", "#1F6AA5"]
-        if self._fdroid.get_field()[i][j] == 1:
+        if self._fdroid_get[i][j] == 1:
             return 'grey' if DEBUG else ["#3B8ED0", "#1F6AA5"]
-        if self._fdroid.get_field()[i][j] == 2:
+        if self._fdroid_get[i][j] == 2:
             return 'red'
-        if self._fdroid.get_field()[i][j] == 3:
+        if self._fdroid_get[i][j] == 3:
             return 'black'
         
     def flash(self, i, j):
-        sleep(2)
+        sleep(1)
         self.field_left[i][j].configure(border_width=4, text='+')
         self.update()
         sleep(1)
         self.field_left[i][j].configure(border_width=0, text='')
 
     def redraw(self):
+        self._fhuman_get = field_human.get_field()
+        self._fdroid_get = field_droid.get_field()
         for i in range(self._size):
             for j in range(self._size):
                 self.field_left[i][j].configure(fg_color=self.cell_view_human(i, j))
@@ -122,9 +125,10 @@ class App(customtkinter.CTk):
         self.flash(x, y)
         if self._fhuman.get_field()[x][y] == 1:
             self._fhuman.hit(x, y)
-            self.droid_helper()
+            self.fire_memory.append((x, y)) #mem
+            self.droid_iq()
 
-    def droid_helper(self):
+    def droid_iq(self):
         def add_next(x, y):
             if min(x, y) >= 0 and max(x, y) < self._size:
                 self.fire_next.add((x, y))
@@ -133,7 +137,7 @@ class App(customtkinter.CTk):
         for i in range(self._size):
             for j in range(self._size):
                 
-                if fhuman[i][j] == 2:
+                if fhuman[i][j] == 2: #ads nsew cells
                     for d in (-1, 1):
                         x, y = i + d, j
                         add_next(x, y)
@@ -154,10 +158,10 @@ class App(customtkinter.CTk):
     def test(self):
         print(self.fire_next)
         print(self.fire_cells)
-        # self._fhuman.move_ships()
-        # self._fdroid.move_ships()
         # self._fhuman.show()
         # self._fdroid.show()
+        # self._fhuman.move_ships()
+        # self._fdroid.move_ships()
         # self.redraw()
 
 
@@ -171,9 +175,3 @@ if __name__ == "__main__":
     app = App(field_human, field_droid, size=SIZE)
     app.mainloop()
 
-
-    # def droid(self):
-    #     x = randint(0, self._size - 1)
-    #     y = randint(0, self._size - 1)
-    #     if self._fhuman.get_field()[x][y] == 1:
-    #         self._fhuman.hit(x, y)
