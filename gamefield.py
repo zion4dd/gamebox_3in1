@@ -4,7 +4,7 @@ from random import randint, choice
 class Ship:
     def __init__(self, length, tp=1, x=None, y=None):
         self._length = length
-        self._tp = tp  # 1 == ; 2 ||
+        self._tp = tp  # 1 || ; 2 ==
         self._x = x
         self._y = y
         self._is_move = True  # False after hit!
@@ -48,7 +48,6 @@ class Ship:
             else:
                 x = self._x
                 y = self._y + i
-            
             yield x, y, self[i]  # __getitem__
 
     def get_start_coords(self):
@@ -81,12 +80,12 @@ class GameField:
         self._ships = []
 
     def init(self):
-        # in order from longest to shortest
+        # create ships(0, 0) in order from longest to shortest
         ships = [Ship(4, tp=choice([1, 2])), Ship(3, tp=choice([1, 2])), 
                  Ship(3, tp=choice([1, 2])), Ship(2, tp=choice([1, 2])), 
                  Ship(2, tp=choice([1, 2])), Ship(2, tp=choice([1, 2])),
                  Ship(1, tp=choice([1, 2])), Ship(1, tp=choice([1, 2])),
-                 Ship(1, tp=choice([1, 2])), Ship(1, tp=choice([1, 2]))]  # create ships(0, 0)
+                 Ship(1, tp=choice([1, 2])), Ship(1, tp=choice([1, 2]))]
         
         for ship in ships:  # put ships on field
             while True:
@@ -100,7 +99,7 @@ class GameField:
                 ship.set_start_coords(x, y)
                 if any(ship.is_collide(sh) for sh in self._ships):
                     continue
-                
+
                 self._ships.append(ship)
                 break
 
@@ -109,7 +108,7 @@ class GameField:
 
     def move_ships(self):
         def move_allowed():
-            # print(ship, direction, end=' | ')
+            # print(ship, direction, end=' | ') #test
             if ship.is_out_field(self._size) or any(ship.is_collide(sh) for sh in self._ships if sh != ship):
                 ship.set_start_coords(*x_y_backup)
                 return False
@@ -128,7 +127,7 @@ class GameField:
         for ship in self._ships:
             for x, y, value in ship:
                 field[x][y] = value
-        return tuple(tuple(row) for row in field)  # why not list?
+        return tuple(tuple(row) for row in field)
 
     def hit(self, x, y):
         for ship in self._ships:
