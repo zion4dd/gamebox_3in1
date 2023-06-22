@@ -1,6 +1,6 @@
 import customtkinter
 import tkinter.messagebox
-from gamefield import GameField
+from seabattle_field import GameField
 from itertools import product
 from random import choice
 from time import sleep
@@ -18,7 +18,7 @@ class App(customtkinter.CTk):
         super().__init__()
 
         self.title("SEABATTLE")
-        self.icofile = 'icon.ico'
+        self.icofile = 'seabattle.ico'
 
         self.resizable(False, False)
         self.geometry("+400+70")
@@ -255,6 +255,7 @@ def seabattle():
     
     app = App(field_human, field_droid, size=SIZE)
     app.mainloop()
+
 
 if __name__ == "__main__":
     seabattle()

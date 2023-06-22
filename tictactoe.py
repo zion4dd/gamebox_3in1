@@ -1,10 +1,11 @@
 import customtkinter
 import tkinter.messagebox
-from tictactoe_field import TicTacToe
+from tictactoe_field import GameField
+import os, sys
 
 
 customtkinter.set_appearance_mode("System")
-customtkinter.set_default_color_theme("blue")
+customtkinter.set_default_color_theme("green")
 
 DEV = False
 
@@ -13,6 +14,7 @@ class App(customtkinter.CTk):
         super().__init__()
 
         self.title("TICTACTOE")
+        self.icofile = 'tictactoe.ico'
 
         self.resizable(False, False)
         self.geometry("+400+70")
@@ -29,8 +31,22 @@ class App(customtkinter.CTk):
                                 text=self.cell_value(i, j),
                                 width=70,
                                 height=70,
-                                command=lambda row=i, column=j: self.human(row, column))
+                                font=('Verdana', 30),
+                                command=lambda row=i, column=j: self.go(row, column))
                 self.field[i][j].grid(row=i, column=j)
+
+        self.get_ico()
+
+    def get_ico(self):
+        try:
+            if DEV:
+                self.iconbitmap(default=self.icofile)
+                return
+            
+            path = os.path.join(sys._MEIPASS, self.icofile)
+            self.iconbitmap(default=path)
+        except:
+            pass
 
     def cell_value(self, r, c):
         if self.game[r, c] == 0:
@@ -46,28 +62,20 @@ class App(customtkinter.CTk):
                 self.field[i][j].configure(text=self.cell_value(i, j))
         self.update()
     
-    def human(self, r, c):
-        if self.game.human_go(r, c):
-            self.redraw()
+    def go(self, r, c):
+        if self.game.human(r, c):
             if self.check_win():
-                self.game.droid_go()
-                self.redraw()
+                self.game.droid()
                 self.check_win()
 
     def check_win(self):
-        if self.game.is_human_win:
-            tkinter.messagebox.showinfo(message='human')
-            self.restart()
-            return
-        if self.game.is_droid_win:
-            tkinter.messagebox.showinfo(message='droid')
-            self.restart()
-            return
-        if self.game.is_draw:
-            tkinter.messagebox.showinfo(message='draw')
-            self.restart()
-            return
-        return True
+        self.redraw()
+        match self.game.win:
+            case 0: return True
+            case 1: tkinter.messagebox.showinfo(message='Human WIN!')
+            case 2: tkinter.messagebox.showinfo(message='Droid WIN!')
+            case 3: tkinter.messagebox.showinfo(message='DRAW!')
+        self.restart()
 
     def restart(self):
         self.game.init()
@@ -75,10 +83,13 @@ class App(customtkinter.CTk):
 
 
 def tictactoe():
-    game = TicTacToe()
+    game = GameField()
     game.init()
+
     app = App(game)
     app.mainloop()
 
+
 if __name__ == "__main__":
     tictactoe()
+
