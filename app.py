@@ -1,9 +1,10 @@
 import customtkinter
 from tictactoe import tictactoe
 from seabattle import seabattle
+from minesweeper import minesweeper
 
-def minesweeper():
-    pass
+
+customtkinter.set_appearance_mode("system")
 
 class App(customtkinter.CTk):
     def __init__(self):

@@ -7,11 +7,13 @@ import os, sys
 customtkinter.set_appearance_mode("system")
 # customtkinter.set_default_color_theme("green")
 
-DEV = True
+DEV = False
 
 class App(customtkinter.CTk):
     def __init__(self, gamefield):
         super().__init__()
+
+        self.gamefield = gamefield
 
         self.title("TICTACTOE")
         self.icofile = 'tictactoe.ico'
@@ -19,8 +21,6 @@ class App(customtkinter.CTk):
         self.resizable(False, False)
         self.geometry("+400+70")
         self.get_ico()
-
-        self.gamefield = gamefield
 
         self.frame = customtkinter.CTkFrame(master=self)
         self.frame.grid(padx=30, pady=30)

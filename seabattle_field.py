@@ -78,9 +78,11 @@ class GameField:
     def __init__(self, size=10):
         self._size = size
         self._ships = []
+        self._life = 20
 
     def init(self):
-        # create ships(0, 0) in order from longest to shortest
+        self.__init__()
+        # create ships in order: from longest to shortest!
         ships = [Ship(4, tp=choice([1, 2])), Ship(3, tp=choice([1, 2])), 
                  Ship(3, tp=choice([1, 2])), Ship(2, tp=choice([1, 2])), 
                  Ship(2, tp=choice([1, 2])), Ship(2, tp=choice([1, 2])),
@@ -103,8 +105,12 @@ class GameField:
                 self._ships.append(ship)
                 break
 
-    def get_ships(self):
-        return self._ships
+    def get_field(self):
+        field = [[0] * self._size for _ in range(self._size)]
+        for ship in self._ships:
+            for x, y, value in ship:
+                field[x][y] = value
+        return field
 
     def move_ships(self):
         def move_allowed():
@@ -122,24 +128,18 @@ class GameField:
                     ship.move(-direction)
                     move_allowed() # to check and backup
 
-    def get_field(self):
-        field = [[0] * self._size for _ in range(self._size)]
-        for ship in self._ships:
-            for x, y, value in ship:
-                field[x][y] = value
-        return tuple(tuple(row) for row in field)
-
-    def hit(self, x, y):
+    def hit(self, r, c):
         for ship in self._ships:
             x1, y1 = ship.get_start_coords()
             x2, y2 = ship.x2, ship.y2
-            if x1 <= x < x2 and y1 <= y < y2:
-                print(f'hit! row: {x1} <= {x} < {x2} | col: {y1} <= {y} < {y2}') #test
-                ship[max(x - x1, y - y1)] = 2
+            if x1 <= r < x2 and y1 <= c < y2:
+                print(f'hit! row: {x1} <= {r} < {x2} | col: {y1} <= {c} < {y2}') #test
+                self._life -= 1
+                ship[max(r - x1, c - y1)] = 2
                 ship._is_move = False
-                if all(map(lambda x: x == 2, ship._cells)):
-                    for x in range(ship.length):
-                        ship[x] = 3
+                if all(map(lambda x: x == 2, ship._cells)): # if dead
+                    for r in range(ship.length):
+                        ship[r] = 3
                 break
 
     def show(self): #test

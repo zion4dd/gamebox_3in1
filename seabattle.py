@@ -8,7 +8,6 @@ import os, sys
 
 
 customtkinter.set_appearance_mode("System")
-customtkinter.set_default_color_theme("blue")
 
 DEV = False # devmod: show droid ships; icon = ./icon.ico
 SIZE = 10
@@ -16,25 +15,19 @@ SIZE = 10
 class App(customtkinter.CTk):
     def __init__(self, field_human: GameField, field_droid: GameField, size=10):
         super().__init__()
-
-        self.title("SEABATTLE")
-        self.icofile = 'seabattle.ico'
-
-        self.resizable(False, False)
-        self.geometry("+400+70")
+        customtkinter.set_default_color_theme("blue")
 
         self.f_human = field_human
         self.f_droid = field_droid
-        self.f_human_get: list = field_human.get_field() # 2d [[],[]]
-        self.f_droid_get: list = field_droid.get_field() # 2d [[],[]]
-        
         self._size = size
-        self.fire_cells = [(x, y) for x in range(self._size) for y in range(self._size)] # droids fire cells
-        self.fire_next = set() # if droid damage ship
-        self.fire_memory = set() # droids hit memory
 
-        self.life_human = sum(sum(x) for x in self.f_human_get)
-        self.life_droid = sum(sum(x) for x in self.f_droid_get)
+        self.title("SEABATTLE")
+        self.icofile = 'seabattle.ico'
+        self.resizable(False, False)
+        self.geometry("+400+70")
+        
+        self.get_ico()
+        self.get_fields()
 
         # ============ create frames (2x3) ============
         self.frame_left_0 = customtkinter.CTkFrame(master=self, corner_radius=0)
@@ -65,26 +58,26 @@ class App(customtkinter.CTk):
 
         # ============ frame_left_1 ============
         self.field_left = [[0] * self._size for _ in range(self._size)]
-        for i in range(self._size):
-            for j in range(self._size):
-                self.field_left[i][j] = customtkinter.CTkButton(master=self.frame_left_1,
-                                                                text='',
-                                                                width=28,
-                                                                border_color='white',
-                                                                hover=False,
-                                                                fg_color=self.cell_view_human(i, j))
-                self.field_left[i][j].grid(row=i, column=j)
+        for r in range(self._size):
+            for c in range(self._size):
+                self.field_left[r][c] = customtkinter.CTkButton(master=self.frame_left_1,
+                                                text='',
+                                                width=28,
+                                                border_color='white',
+                                                hover=False,
+                                                fg_color=self.cell_view_human(r, c))
+                self.field_left[r][c].grid(row=r, column=c)
 
         # ============ frame_right_1 ============
         self.field_right = [[0] * self._size for _ in range(self._size)]
-        for i in range(self._size):
-            for j in range(self._size):
-                self.field_right[i][j] = customtkinter.CTkButton(master=self.frame_right_1,
-                                                                 text='',
-                                                                 width=28,
-                                                                 hover=False,
-                                                                 command=lambda row=i, column=j: self.fire(row, column))
-                self.field_right[i][j].grid(row=i, column=j)
+        for r in range(self._size):
+            for c in range(self._size):
+                self.field_right[r][c] = customtkinter.CTkButton(master=self.frame_right_1,
+                                text='',
+                                width=28,
+                                hover=False,
+                                command=lambda row=r, column=c: self.human(row, column))
+                self.field_right[r][c].grid(row=r, column=c)
 
         # ============ frame_left_2 ============
         self.switch = customtkinter.CTkSwitch(master=self.frame_left_2,
@@ -97,128 +90,128 @@ class App(customtkinter.CTk):
                                               command=self.restart)
         self.button.grid()
 
-        # ============ set default ============
-        self.get_ico()
-        self.progressbar_left.set(self.life_human / 20)
-        self.progressbar_right.set(self.life_droid / 20)
+        self.init()
+
+    def init(self):
+        self.fire_cells = [(r, c) for r in range(self._size) for c in range(self._size)] # droids fire cells
+        self.fire_next = set() # if droid damage ship
+        self.fire_memory = set() # droid hit memory
+
+        self.progressbar_left.set(self.f_human._life / 20)
+        self.progressbar_right.set(self.f_droid._life / 20)
         self.switch.select()
+        self.get_fields()
+    
+    def get_fields(self):
+        "get fields as 2d list"
+        self.f_human_get: list = self.f_human.get_field()
+        self.f_droid_get: list = self.f_droid.get_field()
 
     def get_ico(self):
         try:
             if DEV:
                 self.iconbitmap(default=self.icofile)
-                return
-            
-            path = os.path.join(sys._MEIPASS, self.icofile)
-            self.iconbitmap(default=path)
-        except:
-            pass
+            else:
+                path = os.path.join(sys._MEIPASS, self.icofile)
+                self.iconbitmap(default=path)
+        except: pass
 
-    def cell_view_human(self, i, j):
-        if self.f_human_get[i][j] == 0:
-            return ["#3B8ED0", "#1F6AA5"]
-        if self.f_human_get[i][j] == 1:
-            return 'grey'
-        if self.f_human_get[i][j] == 2:
-            return 'red'
-        if self.f_human_get[i][j] == 3:
-            return 'black'
+    def cell_view_human(self, r, c):
+        match self.f_human_get[r][c]:
+            case 0: return ["#3B8ED0", "#1F6AA5"]
+            case 1: return 'grey'
+            case 2: return 'red'
+            case 3: return 'black'
         
-    def cell_view_droid(self, i, j):
-        if self.f_droid_get[i][j] == 0:
-            return ["#3B8ED0", "#1F6AA5"]
-        if self.f_droid_get[i][j] == 1:
-            return ["#3B8ED0", "#1F6AA5"] if not DEV else 'grey'
-        if self.f_droid_get[i][j] == 2:
-            return 'red'
-        if self.f_droid_get[i][j] == 3:
-            return 'black'
+    def cell_view_droid(self, r, c):
+        match self.f_droid_get[r][c]:
+            case 0: return ["#3B8ED0", "#1F6AA5"]
+            case 1: return ["#3B8ED0", "#1F6AA5"] if not DEV else 'grey'
+            case 2: return 'red'
+            case 3: return 'black'
 
     def redraw(self):
         "redraw field"
-        self.f_human_get = self.f_human.get_field()
-        self.f_droid_get = self.f_droid.get_field()
-        for i in range(self._size):
-            for j in range(self._size):
-                self.field_left[i][j].configure(fg_color=self.cell_view_human(i, j))
-                self.field_right[i][j].configure(fg_color=self.cell_view_droid(i, j))
+        for r in range(self._size):
+            for c in range(self._size):
+                self.field_left[r][c].configure(fg_color=self.cell_view_human(r, c))
+                self.field_right[r][c].configure(fg_color=self.cell_view_droid(r, c))
         self.update()
         
-    def flash(self, i, j):
+    def flash(self, r, c):
         "shows droids fire"
         sleep(0.5)
-        self.field_left[i][j].configure(border_width=4, text='+')
+        self.field_left[r][c].configure(border_width=4, text='+')
         self.update()
         sleep(0.5)
-        self.field_left[i][j].configure(border_width=0, text='')
+        self.field_left[r][c].configure(border_width=0, text='')
 
-    def life_reduce(self, victim):
-        "reduce life progressbar and checks win"
+    def check_win(self):
+        if self.f_human._life == 0:
+            self.win('Ooops.. You lose!')
+        if self.f_droid._life == 0:
+            self.win('Congrats! You win!')
+
+    def win(self, msg):
         global DEV
-        if victim == 'human':
-            self.life_human -= 1
-            self.progressbar_left.set(self.life_human / 20)
-            if self.life_human == 0:
-                DEV = True
-                self.redraw()
-                DEV = False
-                tkinter.messagebox.showinfo(message='Ooops.. You lose!')
-                seabattle()
-        if victim == 'droid':
-            self.life_droid -= 1
-            self.progressbar_right.set(self.life_droid / 20)
-            if self.life_droid == 0:
-                self.redraw()
-                tkinter.messagebox.showinfo(message='Congrats! You win!')
-                seabattle()
+        DEV = True
+        self.redraw()
+        DEV = False
+        tkinter.messagebox.showinfo(message=msg)
+        self.restart()
 
-    def fire(self, i, j):
-        if self.f_droid.get_field()[i][j] == 1:
-            self.f_droid.hit(i, j)
-            self.life_reduce('droid')
+    def human(self, r, c):
+        if self.f_droid_get[r][c] == 1:
+            self.f_droid.hit(r, c)
+            self.get_fields()
+            self.progressbar_right.set(self.f_droid._life / 20)
+            self.check_win()
         self.redraw()
         self.droid()
         self.f_droid.move_ships()
         self.f_human.move_ships()
+        self.get_fields()
         self.redraw()
 
     def droid(self):
         if self.fire_next:
-            x, y = choice(tuple(self.fire_next))
-            self.fire_next.remove((x, y))
+            r, c = choice(tuple(self.fire_next))
+            self.fire_next.remove((r, c))
         else:
-            x, y = choice(self.fire_cells)
-        print(x, y) #test
-        self.flash(x, y)
-        if self.f_human.get_field()[x][y] == 1:
-            self.f_human.hit(x, y) # hit changes self.f_human.get_field()[x][y]
-            self.life_reduce('human')
-            self.fire_memory.add((x, y))
-            if self.f_human.get_field()[x][y] == 2: # ship damaged
+            r, c = choice(self.fire_cells)
+        print(r, c) #test
+        self.flash(r, c)
+        if self.f_human_get[r][c] == 1:
+            self.f_human.hit(r, c) # hit changes self.f_human.get_field()[x][y]
+            self.get_fields()
+            self.progressbar_left.set(self.f_human._life / 20)
+            self.check_win()
+            self.fire_memory.add((r, c))
+            if self.f_human_get[r][c] == 2: # ship damaged
                 if self.switch.get():
-                    self.droid_iq_90(x, y)
+                    self.droid_iq_90(r, c)
                 else:
                     self.droid_iq_70()
             else: # if self.f_human.get_field()[x][y] == 3 ship dead
                 """delete ship and around ship cells from fire_cells. clear fire_next and fire_memory"""
-                for x, y in self.fire_memory:
-                    for a, b in product([-1,0,1], repeat=2):
+                for r, c in self.fire_memory:
+                    for i, j in product([-1,0,1], repeat=2):
                         try:
-                            self.fire_cells.remove((x + a, y + b))
+                            self.fire_cells.remove((r + i, c + j))
                         except:
                             continue
                 self.fire_next = set()
                 self.fire_memory = set()
 
-    def add_fire_next(self, x, y):
-        if min(x, y) >= 0 and max(x, y) < self._size and (x, y) in self.fire_cells:
-            self.fire_next.add((x, y))
+    def add_fire_next(self, r, c):
+        if min(r, c) >= 0 and max(r, c) < self._size and (r, c) in self.fire_cells:
+            self.fire_next.add((r, c))
 
-    def droid_iq_90(self, x, y): # smart algorithm with memory
+    def droid_iq_90(self, r, c): # smart algorithm with memory
         mem = self.fire_memory
         if len(mem) < 2:
             for d in ((0, -1), (0, 1), (-1, 0), (1, 0)):
-                self.add_fire_next(x + d[0], y + d[1])
+                self.add_fire_next(r + d[0], c + d[1])
         else:
             max_ = max(i[0] for i in mem), max(i[1] for i in mem)
             min_ = min(i[0] for i in mem), min(i[1] for i in mem)
@@ -234,17 +227,19 @@ class App(customtkinter.CTk):
         print(self.fire_next) #test
 
     def droid_iq_70(self): # stupid algorithm O(n2)
-        fhuman = self.f_human.get_field()
-        for x in range(self._size):
-            for y in range(self._size):
-                if fhuman[x][y] == 2:
+        f_human = self.f_human_get
+        for r in range(self._size):
+            for c in range(self._size):
+                if f_human[r][c] == 2:
                     for d in ((0, -1), (0, 1), (-1, 0), (1, 0)):
-                        self.add_fire_next(x + d[0], y + d[1])
+                        self.add_fire_next(r + d[0], c + d[1])
         print(self.fire_next) #test
 
     def restart(self):
-        self.destroy()
-        seabattle()
+        self.f_human.init()
+        self.f_droid.init()
+        self.init()
+        self.redraw()
 
 
 def seabattle():
