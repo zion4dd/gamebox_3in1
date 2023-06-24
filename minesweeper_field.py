@@ -39,3 +39,5 @@ class GameField:
                             result += 1
         return result
 
+    def win(self):
+        return sum((not x.is_open for x in self.__field)) == self.__mines

@@ -1,13 +1,8 @@
 import customtkinter
 import tkinter.messagebox
 from tictactoe_field import GameField
-import os, sys
+from config import get_ico
 
-
-customtkinter.set_appearance_mode("system")
-# customtkinter.set_default_color_theme("green")
-
-DEV = False
 
 class App(customtkinter.CTk):
     def __init__(self, gamefield):
@@ -20,7 +15,7 @@ class App(customtkinter.CTk):
 
         self.resizable(False, False)
         self.geometry("+400+70")
-        self.get_ico()
+        get_ico(self)
 
         self.frame = customtkinter.CTkFrame(master=self)
         self.frame.grid(padx=30, pady=30)
@@ -38,16 +33,6 @@ class App(customtkinter.CTk):
                                 font=('Verdana', 36),
                                 command=lambda row=r, column=c: self.go((row, column)))
                 self.buttons[r][c].grid(row=r, column=c)
-
-    def get_ico(self):
-        try:
-            if DEV:
-                self.iconbitmap(default=self.icofile)
-                return
-            
-            path = os.path.join(sys._MEIPASS, self.icofile)
-            self.iconbitmap(default=path)
-        except: pass
 
     def cell_value(self, coords: tuple):
         match self.gamefield[coords]:

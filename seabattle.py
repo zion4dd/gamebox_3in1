@@ -4,13 +4,11 @@ from seabattle_field import GameField
 from itertools import product
 from random import choice
 from time import sleep
-import os, sys
+from config import get_ico, DEV  # devmod: show droid ships
 
 
-customtkinter.set_appearance_mode("System")
-
-DEV = False # devmod: show droid ships; icon = ./icon.ico
 SIZE = 10
+
 
 class App(customtkinter.CTk):
     def __init__(self, field_human: GameField, field_droid: GameField, size=10):
@@ -24,9 +22,8 @@ class App(customtkinter.CTk):
         self.title("SEABATTLE")
         self.icofile = 'seabattle.ico'
         self.resizable(False, False)
-        self.geometry("+400+70")
-        
-        self.get_ico()
+        self.geometry("+400+110")
+        get_ico(self)
         self.get_fields()
 
         # ============ create frames (2x3) ============
@@ -107,15 +104,6 @@ class App(customtkinter.CTk):
         self.f_human_get: list = self.f_human.get_field()
         self.f_droid_get: list = self.f_droid.get_field()
 
-    def get_ico(self):
-        try:
-            if DEV:
-                self.iconbitmap(default=self.icofile)
-            else:
-                path = os.path.join(sys._MEIPASS, self.icofile)
-                self.iconbitmap(default=path)
-        except: pass
-
     def cell_view_human(self, r, c):
         match self.f_human_get[r][c]:
             case 0: return ["#3B8ED0", "#1F6AA5"]
@@ -140,10 +128,9 @@ class App(customtkinter.CTk):
         
     def flash(self, r, c):
         "shows droids fire"
-        sleep(0.5)
+        sleep(0.7)
         self.field_left[r][c].configure(border_width=4, text='+')
         self.update()
-        sleep(0.5)
         self.field_left[r][c].configure(border_width=0, text='')
 
     def check_win(self):

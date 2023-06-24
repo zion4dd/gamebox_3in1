@@ -1,12 +1,9 @@
 import customtkinter
 import tkinter.messagebox
 from minesweeper_field import GameField
-import os, sys
-#TODO win counter + progressbar, flags??, ico
+from config import get_ico
 
-customtkinter.set_appearance_mode("system")
 
-DEV = True
 SIZE = 10
 MINES = 10
 
@@ -22,8 +19,8 @@ class App(customtkinter.CTk):
         self.icofile = 'minesweeper.ico'
 
         self.resizable(False, False)
-        self.geometry("+400+70")
-        self.get_ico()
+        self.geometry("+400+150")
+        get_ico(self)
 
         self.frame = customtkinter.CTkFrame(master=self)
         self.frame.grid(row=0, column=0, padx=30, pady=20)
@@ -35,10 +32,11 @@ class App(customtkinter.CTk):
         for r in range(self.size):
             for c in range(self.size):
                 self.buttons[r][c] = customtkinter.CTkButton(master=self.frame,
-                                text=self.cell_value(r, c),
-                                width=28,
-                                text_color='black',
-                                command=lambda row=r, column=c: self.go(row, column))
+                                                             text=self.cell_value(r, c),
+                                                             width=28,
+                                                             text_color='black',
+                                                             command=lambda row=r, col=c: self.go(row, col))
+                self.buttons[r][c].bind('<Button-3>', lambda x, row=r, col=c: self.right_click(row, col))
                 self.buttons[r][c].grid(row=r, column=c)
 
         self.button = customtkinter.CTkButton(master=self.frame1,
@@ -46,30 +44,33 @@ class App(customtkinter.CTk):
                                               command=self.restart)
         self.button.grid()
 
-    def get_ico(self):
-        try:
-            if DEV:
-                self.iconbitmap(default=self.icofile)
-                return
-            
-            path = os.path.join(sys._MEIPASS, self.icofile)
-            self.iconbitmap(default=path)
-        except: pass
-
     def cell_value(self, r, c):
         cell = self.gamefield[r, c]
         if cell.is_open:
             return cell.around_mines if not cell.mine else 'x'
-        
         return ''
 
-    def redraw(self, open_all=False):
+    def redraw(self, open_all=False, paint_to_green=False):
         for r in range(self.size):
             for c in range(self.size):
                 if open_all:
                     self.gamefield[r, c].is_open = True
+                if paint_to_green:
+                    self.paint_to_green(r, c)
                 self.buttons[r][c].configure(text=self.cell_value(r, c))
         self.update()
+
+    def right_click(self, r, c):
+        if self.buttons[r][c].cget('fg_color') == 'red':
+            self.paint_to_green(r, c)
+        else:
+            self.paint_to_red(r, c)
+
+    def paint_to_green(self, r, c):
+        self.buttons[r][c].configure(fg_color=['#2CC985', '#2FA572'], hover_color=['#0C955A', '#106A43'])
+
+    def paint_to_red(self, r, c):
+        self.buttons[r][c].configure(fg_color='red', hover_color=["#A50021", "#A50021"])
 
     def go(self, r, c):
         cell = self.gamefield[r, c]
@@ -84,7 +85,7 @@ class App(customtkinter.CTk):
             else:
                 self.zerocell(r, c)
             self.redraw()
-            self.check_win
+            self.check_win()
 
     def zerocell(self, r, c):
         for i in range(r-1, r+2):
@@ -94,11 +95,13 @@ class App(customtkinter.CTk):
                         self.gamefield[i, j].is_open = True
 
     def check_win(self):
-        pass
+        if self.gamefield.win():
+            tkinter.messagebox.showinfo(message='Congrats! You win!')
+            self.restart()
 
     def restart(self):
         self.gamefield.init()
-        self.redraw()
+        self.redraw(paint_to_green=True)
 
 def minesweeper():
     game = GameField(SIZE, MINES)
@@ -110,3 +113,5 @@ def minesweeper():
 
 if __name__ == "__main__":
     minesweeper()
+
+    
